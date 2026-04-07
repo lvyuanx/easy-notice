@@ -1,0 +1,68 @@
+{% extends "memos/base.html" %}
+
+{% block title %}{% if is_create %}新建备忘录{% else %}编辑备忘录{% endif %}{% endblock %}
+
+{% block content %}
+<section class="panel panel-narrow">
+    <div class="panel-title-row">
+        <h2>{% if is_create %}新建备忘录{% else %}编辑备忘录{% endif %}</h2>
+    </div>
+
+    <form method="post" class="stack-form">
+        {% csrf_token %}
+        {% if next_url %}
+            <input type="hidden" name="next" value="{{ next_url }}">
+        {% endif %}
+
+        {% if form.non_field_errors %}
+            <div class="form-errors">{{ form.non_field_errors }}</div>
+        {% endif %}
+
+        <div class="form-row">
+            <label for="{{ form.title.id_for_label }}">标题</label>
+            {{ form.title }}
+            <div class="form-errors">{{ form.title.errors }}</div>
+        </div>
+
+        <div class="form-row">
+            <label for="{{ form.content.id_for_label }}">内容</label>
+            {{ form.content }}
+            <div class="form-errors">{{ form.content.errors }}</div>
+        </div>
+
+        <div class="form-row-grid">
+            <div class="form-row">
+                <label for="{{ form.group.id_for_label }}">分组</label>
+                {{ form.group }}
+                <div class="form-errors">{{ form.group.errors }}</div>
+            </div>
+
+            <div class="form-row">
+                <label for="{{ form.priority.id_for_label }}">优先级</label>
+                {{ form.priority }}
+                <div class="form-errors">{{ form.priority.errors }}</div>
+            </div>
+
+            <div class="form-row">
+                <label for="{{ form.due_date.id_for_label }}">截止日期</label>
+                {{ form.due_date }}
+                <div class="form-errors">{{ form.due_date.errors }}</div>
+            </div>
+        </div>
+
+        <div class="check-row">
+            <label>{{ form.is_pinned }} 设为置顶</label>
+            <label>{{ form.is_completed }} 标记为已完成</label>
+        </div>
+
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary">保存</button>
+            {% if next_url %}
+                <a href="{{ next_url }}" class="btn btn-ghost">取消</a>
+            {% else %}
+                <a href="{% url 'memo_list' %}" class="btn btn-ghost">取消</a>
+            {% endif %}
+        </div>
+    </form>
+</section>
+{% endblock %}

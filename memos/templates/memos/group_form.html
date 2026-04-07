@@ -1,0 +1,38 @@
+{% extends "memos/base.html" %}
+
+{% block title %}编辑分组{% endblock %}
+
+{% block content %}
+<section class="panel panel-narrow">
+    <div class="panel-title-row">
+        <h2>编辑分组：{{ group.name }}</h2>
+    </div>
+
+    <form method="post" class="stack-form">
+        {% csrf_token %}
+
+        <div class="form-row">
+            <label for="{{ form.name.id_for_label }}">名称</label>
+            {{ form.name }}
+            <div class="form-errors">{{ form.name.errors }}</div>
+        </div>
+
+        <div class="form-row">
+            <label for="{{ form.description.id_for_label }}">说明</label>
+            {{ form.description }}
+            <div class="form-errors">{{ form.description.errors }}</div>
+        </div>
+
+        <div class="form-row">
+            <label for="{{ form.color.id_for_label }}">颜色</label>
+            {{ form.color }}
+            <div class="form-errors">{{ form.color.errors }}</div>
+        </div>
+
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary">保存</button>
+            <a href="{% url 'group_list' %}" class="btn btn-ghost">取消</a>
+        </div>
+    </form>
+</section>
+{% endblock %}

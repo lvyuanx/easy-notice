@@ -1,0 +1,161 @@
+{% extends "memos/base.html" %}
+
+{% block title %}日历视图{% endblock %}
+
+{% block extra_head %}{% endblock %}
+
+{% block content %}
+<section class="calendar-component-layout">
+    <section class="panel">
+        <div class="calendar-component-toolbar">
+            <h2>备忘录日历</h2>
+            <p class="text-muted">点击日期查看当天详情，点击事件可快速编辑。</p>
+        </div>
+        <div id="memo-calendar" class="fc-host"></div>
+    </section>
+
+    <aside class="calendar-component-side">
+        <section class="panel">
+            <div class="panel-title-row">
+                <h2 id="day-title">加载中...</h2>
+                <span id="day-count">0 条</span>
+            </div>
+            <div class="calendar-side-actions">
+                <a id="day-list-link" href="{% url 'memo_list' %}" class="btn btn-ghost">列表查看当天</a>
+                <a id="day-create-link" href="{% url 'memo_create' %}" class="btn btn-primary">新建当天备忘录</a>
+            </div>
+            <div id="calendar-day-list" class="day-memo-list"></div>
+        </section>
+
+        <section class="panel">
+            <div class="panel-title-row">
+                <h2>未设置截止日期</h2>
+                <span>{{ undated_memos|length }} 条</span>
+            </div>
+            {% if undated_memos %}
+                <div class="undated-list">
+                    {% for memo in undated_memos %}
+                        <a href="{% url 'memo_edit' memo.id %}?next={{ request.get_full_path|urlencode }}" class="undated-item">
+                            <span>{{ memo.title|truncatechars:18 }}</span>
+                            <span class="badge badge-priority-{{ memo.priority }}">{{ memo.get_priority_display }}</span>
+                        </a>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <p class="text-muted">所有备忘录都设置了截止日期。</p>
+            {% endif %}
+        </section>
+    </aside>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.17/index.global.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@fullcalendar/core@6.1.17/locales-all.global.min.js"></script>
+<script>
+(() => {
+    const calendarEl = document.getElementById("memo-calendar");
+    const dayTitleEl = document.getElementById("day-title");
+    const dayCountEl = document.getElementById("day-count");
+    const dayListEl = document.getElementById("calendar-day-list");
+    const dayListLinkEl = document.getElementById("day-list-link");
+    const dayCreateLinkEl = document.getElementById("day-create-link");
+    const initialDate = "{{ initial_date }}";
+    const eventsApiUrl = "{% url 'memo_calendar_events_api' %}";
+    const dayApiUrl = "{% url 'memo_calendar_day_api' %}";
+
+    const escapeHtml = (value) => {
+        const div = document.createElement("div");
+        div.textContent = value || "";
+        return div.innerHTML;
+    };
+
+    const renderBadges = (memo) => {
+        const badges = [];
+        if (memo.is_pinned) badges.push('<span class="badge badge-pin">置顶</span>');
+        badges.push(`<span class="badge badge-priority-${memo.priority_value}">${escapeHtml(memo.priority)}</span>`);
+        if (memo.is_completed) badges.push('<span class="badge badge-done">已完成</span>');
+        return badges.join("");
+    };
+
+    const renderDayMemos = (payload) => {
+        dayTitleEl.textContent = payload.date_label;
+        dayCountEl.textContent = `${payload.count} 条`;
+        dayListLinkEl.href = payload.list_url;
+        dayCreateLinkEl.href = payload.create_url;
+
+        if (!payload.memos.length) {
+            dayListEl.innerHTML = `
+                <div class="empty-state">
+                    <h3>当天没有备忘录</h3>
+                    <p>可点击“新建当天备忘录”快速添加。</p>
+                </div>
+            `;
+            return;
+        }
+
+        dayListEl.innerHTML = payload.memos.map((memo) => `
+            <article class="day-memo-card ${memo.is_completed ? "completed" : ""}">
+                <div class="day-memo-head">
+                    <h3>${escapeHtml(memo.title)}</h3>
+                    <div class="badge-row">${renderBadges(memo)}</div>
+                </div>
+                <p class="memo-content">${escapeHtml(memo.content_preview || "（无详情）")}</p>
+                <div class="memo-meta">分组：${escapeHtml(memo.group_name)}</div>
+                <div class="memo-actions">
+                    <a class="btn btn-ghost" href="${memo.edit_url}?next=${encodeURIComponent(location.pathname + location.search)}">编辑</a>
+                    <a class="btn btn-ghost" href="${payload.list_url}">列表定位</a>
+                </div>
+            </article>
+        `).join("");
+    };
+
+    const loadDay = async (dateStr) => {
+        dayListEl.innerHTML = '<p class="text-muted">加载中...</p>';
+        try {
+            const response = await fetch(`${dayApiUrl}?date=${encodeURIComponent(dateStr)}`);
+            const payload = await response.json();
+            renderDayMemos(payload);
+        } catch (error) {
+            dayListEl.innerHTML = '<p class="text-muted">当天数据加载失败，请刷新重试。</p>';
+        }
+    };
+
+    const calendar = new FullCalendar.Calendar(calendarEl, {
+        locale: "zh-cn",
+        initialDate: initialDate,
+        initialView: "dayGridMonth",
+        firstDay: 1,
+        fixedWeekCount: false,
+        height: "auto",
+        dayMaxEventRows: 3,
+        headerToolbar: {
+            left: "prev,next today",
+            center: "title",
+            right: "dayGridMonth,listWeek",
+        },
+        buttonText: {
+            today: "今天",
+            month: "月视图",
+            week: "周视图",
+        },
+        events: eventsApiUrl,
+        dateClick: (info) => {
+            loadDay(info.dateStr);
+            const nextUrl = `${location.pathname}?date=${encodeURIComponent(info.dateStr)}`;
+            history.replaceState({}, "", nextUrl);
+        },
+        eventClick: (info) => {
+            info.jsEvent.preventDefault();
+            const eventDate = info.event.startStr.slice(0, 10);
+            loadDay(eventDate);
+            const nextUrl = `${location.pathname}?date=${encodeURIComponent(eventDate)}`;
+            history.replaceState({}, "", nextUrl);
+        },
+    });
+
+    calendar.render();
+    loadDay(initialDate);
+})();
+</script>
+{% endblock %}

@@ -1,0 +1,40 @@
+<label for="{{ id_prefix }}q">关键词</label>
+<input id="{{ id_prefix }}q" class="form-input" type="text" name="q" value="{{ search }}" placeholder="按标题或内容搜索">
+
+<label for="{{ id_prefix }}group">分组</label>
+<select id="{{ id_prefix }}group" class="form-input" name="group">
+    <option value="">全部分组</option>
+    {% for group in groups %}
+        <option value="{{ group.id }}" {% if group_id == group.id|stringformat:"s" %}selected{% endif %}>
+            {{ group.name }}
+        </option>
+    {% endfor %}
+</select>
+
+<label for="{{ id_prefix }}status">状态</label>
+<select id="{{ id_prefix }}status" class="form-input" name="status">
+    <option value="all" {% if status == "all" %}selected{% endif %}>全部</option>
+    <option value="active" {% if status == "active" %}selected{% endif %}>进行中</option>
+    <option value="completed" {% if status == "completed" %}selected{% endif %}>已完成</option>
+    <option value="overdue" {% if status == "overdue" %}selected{% endif %}>已逾期</option>
+</select>
+
+<label for="{{ id_prefix }}priority">优先级</label>
+<select id="{{ id_prefix }}priority" class="form-input" name="priority">
+    <option value="">全部优先级</option>
+    {% for value, label in priority_choices %}
+        <option value="{{ value }}" {% if priority == value|stringformat:"s" %}selected{% endif %}>{{ label }}</option>
+    {% endfor %}
+</select>
+
+<label for="{{ id_prefix }}date">截止日期</label>
+<input id="{{ id_prefix }}date" class="form-input" type="date" name="date" value="{{ date_filter }}">
+
+<label for="{{ id_prefix }}sort">排序</label>
+<select id="{{ id_prefix }}sort" class="form-input" name="sort">
+    <option value="default" {% if sort == "default" %}selected{% endif %}>默认</option>
+    <option value="newest" {% if sort == "newest" %}selected{% endif %}>最新创建</option>
+    <option value="oldest" {% if sort == "oldest" %}selected{% endif %}>最早创建</option>
+    <option value="due" {% if sort == "due" %}selected{% endif %}>截止日期</option>
+    <option value="priority" {% if sort == "priority" %}selected{% endif %}>优先级</option>
+</select>

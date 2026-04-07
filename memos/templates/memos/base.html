@@ -1,0 +1,39 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="zh-Hans">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block title %}备忘录系统{% endblock %}</title>
+    <link rel="stylesheet" href="{% static 'memos/app.css' %}">
+    {% block extra_head %}{% endblock %}
+</head>
+<body>
+    <header class="site-header">
+        <div class="shell header-inner">
+            <a class="brand" href="{% url 'memo_list' %}">
+                <span class="brand-mark"></span>
+                <span>备忘录系统</span>
+            </a>
+            <nav class="main-nav">
+                <a href="{% url 'memo_list' %}" class="{% if request.resolver_match.url_name == 'memo_list' or request.resolver_match.url_name == 'memo_create' or request.resolver_match.url_name == 'memo_edit' %}active{% endif %}">备忘录</a>
+                <a href="{% url 'memo_calendar' %}" class="{% if request.resolver_match.url_name == 'memo_calendar' %}active{% endif %}">日历</a>
+                <a href="{% url 'group_list' %}" class="{% if request.resolver_match.url_name == 'group_list' or request.resolver_match.url_name == 'group_edit' %}active{% endif %}">分组</a>
+            </nav>
+        </div>
+    </header>
+
+    <main class="shell page-body">
+        {% if messages %}
+            <div class="message-stack">
+                {% for message in messages %}
+                    <div class="message {{ message.tags }}">{{ message }}</div>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        {% block content %}{% endblock %}
+    </main>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

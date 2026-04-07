@@ -1,0 +1,73 @@
+{% extends "memos/base.html" %}
+
+{% block title %}分组管理{% endblock %}
+
+{% block content %}
+<section class="content-grid content-grid-2">
+    <aside class="panel">
+        <div class="panel-title-row">
+            <h2>新建分组</h2>
+        </div>
+
+        <form method="post" class="stack-form">
+            {% csrf_token %}
+
+            <div class="form-row">
+                <label for="{{ form.name.id_for_label }}">名称</label>
+                {{ form.name }}
+                <div class="form-errors">{{ form.name.errors }}</div>
+            </div>
+
+            <div class="form-row">
+                <label for="{{ form.description.id_for_label }}">说明</label>
+                {{ form.description }}
+                <div class="form-errors">{{ form.description.errors }}</div>
+            </div>
+
+            <div class="form-row">
+                <label for="{{ form.color.id_for_label }}">颜色</label>
+                {{ form.color }}
+                <div class="form-errors">{{ form.color.errors }}</div>
+            </div>
+
+            <button type="submit" class="btn btn-primary">创建分组</button>
+        </form>
+    </aside>
+
+    <section class="panel">
+        <div class="panel-title-row">
+            <h2>全部分组</h2>
+            <span>{{ groups|length }} 个</span>
+        </div>
+
+        {% if groups %}
+            <div class="group-list">
+                {% for group in groups %}
+                    <article class="group-card">
+                        <div class="group-main">
+                            <span class="group-color" style="background: {{ group.color }};"></span>
+                            <div>
+                                <h3>{{ group.name }}</h3>
+                                {% if group.description %}<p>{{ group.description }}</p>{% endif %}
+                            </div>
+                        </div>
+                        <div class="group-right">
+                            <span class="text-muted">{{ group.memo_count }} 条备忘录</span>
+                            <a class="btn btn-ghost" href="{% url 'group_edit' group.id %}">编辑</a>
+                            <form method="post" action="{% url 'group_delete' group.id %}" onsubmit="return confirm('确认删除该分组吗？该分组下备忘录会变为未分组。');">
+                                {% csrf_token %}
+                                <button class="btn btn-danger" type="submit">删除</button>
+                            </form>
+                        </div>
+                    </article>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="empty-state">
+                <h3>还没有分组</h3>
+                <p>创建分组后，备忘录管理会更清晰。</p>
+            </div>
+        {% endif %}
+    </section>
+</section>
+{% endblock %}

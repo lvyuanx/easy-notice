@@ -1,0 +1,147 @@
+{% extends "memos/base.html" %}
+
+{% block title %}备忘录{% endblock %}
+
+{% block content %}
+<section class="stats-grid">
+    <a class="stats-card {% if status == 'all' %}is-active{% endif %}" href="?status=all{% if search %}&q={{ search|urlencode }}{% endif %}{% if group_id %}&group={{ group_id }}{% endif %}{% if priority %}&priority={{ priority }}{% endif %}{% if date_filter %}&date={{ date_filter }}{% endif %}{% if sort %}&sort={{ sort }}{% endif %}">
+        <p>总数</p>
+        <h3>{{ stats.total }}</h3>
+    </a>
+    <a class="stats-card {% if status == 'active' %}is-active{% endif %}" href="?status=active{% if search %}&q={{ search|urlencode }}{% endif %}{% if group_id %}&group={{ group_id }}{% endif %}{% if priority %}&priority={{ priority }}{% endif %}{% if date_filter %}&date={{ date_filter }}{% endif %}{% if sort %}&sort={{ sort }}{% endif %}">
+        <p>进行中</p>
+        <h3>{{ stats.active }}</h3>
+    </a>
+    <a class="stats-card {% if status == 'completed' %}is-active{% endif %}" href="?status=completed{% if search %}&q={{ search|urlencode }}{% endif %}{% if group_id %}&group={{ group_id }}{% endif %}{% if priority %}&priority={{ priority }}{% endif %}{% if date_filter %}&date={{ date_filter }}{% endif %}{% if sort %}&sort={{ sort }}{% endif %}">
+        <p>已完成</p>
+        <h3>{{ stats.completed }}</h3>
+    </a>
+    <a class="stats-card warning {% if status == 'overdue' %}is-active{% endif %}" href="?status=overdue{% if search %}&q={{ search|urlencode }}{% endif %}{% if group_id %}&group={{ group_id }}{% endif %}{% if priority %}&priority={{ priority }}{% endif %}{% if date_filter %}&date={{ date_filter }}{% endif %}{% if sort %}&sort={{ sort }}{% endif %}">
+        <p>已逾期</p>
+        <h3>{{ stats.overdue }}</h3>
+    </a>
+</section>
+
+<section class="content-grid">
+    <aside class="panel filter-desktop">
+        <div class="panel-title-row">
+            <h2>筛选</h2>
+        </div>
+        <form method="get" class="filter-form">
+            {% include "memos/partials/filter_fields.html" with id_prefix="d-" %}
+            <button class="btn btn-primary" type="submit">应用筛选</button>
+        </form>
+
+        <div class="panel-actions">
+            <a class="btn btn-primary" href="{% url 'memo_create' %}">+ 新建备忘录</a>
+            <a class="btn btn-ghost" href="{% url 'group_list' %}">管理分组</a>
+        </div>
+    </aside>
+
+    <section class="panel">
+        <div class="panel-title-row">
+            <h2>备忘录列表</h2>
+            <span>{{ memos|length }} 条</span>
+        </div>
+        {% if date_filter %}
+            <div class="date-filter-tip">
+                当前按日期筛选：{{ date_filter }}
+                <a href="{% url 'memo_list' %}">清除</a>
+            </div>
+        {% endif %}
+
+        <div class="mobile-filter-head mobile-only">
+            <button type="button" class="icon-btn" id="mobile-filter-toggle" aria-controls="mobile-filter-panel" aria-expanded="false" title="筛选">
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M4 5h16v2l-6 6v5l-4 2v-7L4 7V5z"></path>
+                </svg>
+            </button>
+            <a class="btn btn-primary" href="{% url 'memo_create' %}">+ 新建</a>
+            <a class="btn btn-ghost" href="{% url 'group_list' %}">分组</a>
+        </div>
+
+        <div class="mobile-filter-panel mobile-only" id="mobile-filter-panel" hidden>
+            <form method="get" class="filter-form">
+                {% include "memos/partials/filter_fields.html" with id_prefix="m-" %}
+                <button class="btn btn-primary" type="submit">应用筛选</button>
+            </form>
+        </div>
+
+        {% if memos %}
+            <div class="memo-list">
+                {% for memo in memos %}
+                    <article class="memo-card {% if memo.is_completed %}completed{% endif %}">
+                        <div class="memo-head">
+                            <h3>{{ memo.title }}</h3>
+                            <div class="badge-row">
+                                {% if memo.is_pinned %}<span class="badge badge-pin">置顶</span>{% endif %}
+                                {% if memo.is_overdue %}<span class="badge badge-overdue">逾期</span>{% endif %}
+                                <span class="badge badge-priority-{{ memo.priority }}">{{ memo.get_priority_display }}</span>
+                                {% if memo.is_completed %}<span class="badge badge-done">已完成</span>{% endif %}
+                            </div>
+                        </div>
+
+                        {% if memo.content %}
+                            <p class="memo-content">{{ memo.content|linebreaksbr }}</p>
+                        {% endif %}
+
+                        <ul class="memo-meta">
+                            <li>分组：{% if memo.group %}<span class="chip"><i style="background: {{ memo.group.color }}"></i>{{ memo.group.name }}</span>{% else %}<span class="text-muted">未分组</span>{% endif %}</li>
+                            <li>截止：{% if memo.due_date %}{{ memo.due_date|date:"Y-m-d" }}{% else %}<span class="text-muted">未设置</span>{% endif %}</li>
+                            <li>更新：{{ memo.updated_at|date:"Y-m-d H:i" }}</li>
+                        </ul>
+
+                        <div class="memo-actions">
+                            <form method="post" action="{% url 'memo_toggle_complete' memo.id %}">
+                                {% csrf_token %}
+                                <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                                <button class="btn btn-ghost" type="submit">{% if memo.is_completed %}改为进行中{% else %}标记完成{% endif %}</button>
+                            </form>
+                            <form method="post" action="{% url 'memo_toggle_pin' memo.id %}">
+                                {% csrf_token %}
+                                <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                                <button class="btn btn-ghost" type="submit">{% if memo.is_pinned %}取消置顶{% else %}置顶{% endif %}</button>
+                            </form>
+                            <a class="btn btn-ghost" href="{% url 'memo_edit' memo.id %}?next={{ request.get_full_path|urlencode }}">编辑</a>
+                            <form method="post" action="{% url 'memo_delete' memo.id %}" onsubmit="return confirm('确认删除这条备忘录吗？');">
+                                {% csrf_token %}
+                                <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                                <button class="btn btn-danger" type="submit">删除</button>
+                            </form>
+                        </div>
+                    </article>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="empty-state">
+                <h3>暂无备忘录</h3>
+                <p>你可以新建一条，或调整筛选条件。</p>
+                <a class="btn btn-primary" href="{% url 'memo_create' %}">创建第一条备忘录</a>
+            </div>
+        {% endif %}
+    </section>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(() => {
+    const toggle = document.getElementById("mobile-filter-toggle");
+    const panel = document.getElementById("mobile-filter-panel");
+    if (!toggle || !panel) return;
+
+    toggle.addEventListener("click", () => {
+        const isOpening = panel.hasAttribute("hidden");
+        if (isOpening) {
+            panel.removeAttribute("hidden");
+            panel.classList.add("is-open");
+            toggle.setAttribute("aria-expanded", "true");
+        } else {
+            panel.classList.remove("is-open");
+            panel.setAttribute("hidden", "");
+            toggle.setAttribute("aria-expanded", "false");
+        }
+    });
+})();
+</script>
+{% endblock %}

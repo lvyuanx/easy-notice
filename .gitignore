@@ -1,0 +1,22 @@
+# Python-generated files
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
+
+# Virtual environments
+.venv
+.vscode
+
+# ignore build script output
+dist/
+build/
+
+logs/
+logs-time/
+game.log
+
+# 根据不同环境具体的配置，无需git管理
+/sources.bash
