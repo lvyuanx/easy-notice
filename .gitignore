@@ -17,6 +17,9 @@ build/
 logs/
 logs-time/
 game.log
+staticfiles/
+data/
 
 # 根据不同环境具体的配置，无需git管理
 /sources.bash
+.env

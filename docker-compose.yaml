@@ -1,0 +1,25 @@
+services:
+  web:
+    image: notice-web:latest
+    pull_policy: build
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: notice-web
+    ports:
+      - "8000:8000"
+    environment:
+      DJANGO_SECRET_KEY: "${DJANGO_SECRET_KEY:-please-change-this-secret-key}"
+      DJANGO_DEBUG: "${DJANGO_DEBUG:-False}"
+      DJANGO_ALLOWED_HOSTS: "${DJANGO_ALLOWED_HOSTS:-127.0.0.1,localhost}"
+      SQLITE_PATH: "${SQLITE_PATH:-/app/data/db.sqlite3}"
+      TZ: "${TZ:-Asia/Shanghai}"
+      GUNICORN_WORKERS: "${GUNICORN_WORKERS:-2}"
+      GUNICORN_THREADS: "${GUNICORN_THREADS:-2}"
+      GUNICORN_TIMEOUT: "${GUNICORN_TIMEOUT:-60}"
+    volumes:
+      - notice_data:/app/data
+    restart: unless-stopped
+
+volumes:
+  notice_data:
