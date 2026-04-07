@@ -5,11 +5,13 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+      args:
+        PIP_INDEX_URL: "${PIP_INDEX_URL:-https://pypi.tuna.tsinghua.edu.cn/simple}"
     container_name: notice-web
     ports:
       - "8000:8000"
     environment:
-      DJANGO_SECRET_KEY: "${DJANGO_SECRET_KEY:-please-change-this-secret-key}"
+      DJANGO_SECRET_KEY: "please-change-this-secret-key"
       DJANGO_DEBUG: "${DJANGO_DEBUG:-False}"
       DJANGO_ALLOWED_HOSTS: "${DJANGO_ALLOWED_HOSTS:-127.0.0.1,localhost}"
       SQLITE_PATH: "${SQLITE_PATH:-/app/data/db.sqlite3}"
